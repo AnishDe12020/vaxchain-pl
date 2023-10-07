@@ -2,7 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-vaxchain_pl = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+vpl = "6JuaxB1fEN9n6ApcvRxy6avr25H8qTzGRGpT43qrCvm4"
 
 [registry]
 url = "https://api.apr.dev"

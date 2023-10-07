@@ -28,7 +28,7 @@ Devnet address - to be deployed
   - tempMin - u8 (kelvins)
   - tempMax - u8 (kelvins)
   - costPerPiece - u16
-  - status - Enum(Manufactured, ShippedFromManufacturer, ReceivedByDistributor, ShippedFromDistributor, ReceivedByDoctor)
+  - status - Enum(Manufactured, StoredByDistributor, ReceivedByDoctor)
   - tempDefect - Boolean
 - Vaccine
   - pubkey - PublicKey
@@ -38,7 +38,6 @@ Devnet address - to be deployed
 - Log
   - batch - PublicKey
   - timestamp - i64
-  - type - Enum(Manufactured, ShippedFromManufacturer, ReceivedByDistributor, ShippedFromDistributor, ReceivedByDoctor)
 - TempLog
   - batch - PublicKey
   - timestamp - i64
