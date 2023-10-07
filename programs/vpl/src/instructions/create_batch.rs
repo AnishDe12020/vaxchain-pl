@@ -1,15 +1,21 @@
-use anchor_lang::prelude::*;
+use std::str::FromStr;
 
-use crate::state::{
+use anchor_lang::prelude::*;
+use anchor_spl::token::{TokenAccount, Mint, Token};
+
+use crate::{state::{
     user::{Role, User},
     batch::{Batch, BatchStatus},  
-};
+}, constants::VAX_TOKEN_MINT};
 
 use crate::errors::VplError;
 
-pub fn create_batch_ix(ctx: Context<CreateBatch>, expires_at: i64, temp_min: u16, temp_max: u16, cost_per_piece: u16) -> Result<()> {
+pub fn create_batch_ix(ctx: Context<CreateBatch>, expires_at: i64, temp_min: u16, temp_max: u16, cost_per_piece: u16, quantity: u16) -> Result<()> {
     let user_pda = &mut ctx.accounts.user_pda;
     let batch_pda = &mut ctx.accounts.batch_pda;  
+    let mint = &ctx.accounts.mint;
+
+    require!(mint.key() == Pubkey::from_str(VAX_TOKEN_MINT).unwrap(), VplError::InvalidMint);
 
     require!(matches!(user_pda.role, Role::Manufacturer), VplError::UnauhtorizedRole);
 
@@ -25,7 +31,7 @@ pub fn create_batch_ix(ctx: Context<CreateBatch>, expires_at: i64, temp_min: u16
     batch_pda.temp_max = temp_max;
     batch_pda.cost_per_piece = cost_per_piece;
     batch_pda.status = BatchStatus::Manufactured;
-    batch_pda.quantity = 0;
+    batch_pda.quantity = quantity;
 
     Ok(())
 }
@@ -49,5 +55,16 @@ pub struct CreateBatch<'info> {
         space = Batch::LEN
     )]
     pub batch_pda: Account<'info, Batch>,
+    #[account(
+        init,
+        payer = user,
+        seeds = [b"vault".as_ref(), batch.key().as_ref(), mint.key().as_ref()],
+        bump,
+        token::mint = mint,
+        token::authority = vault
+    )]
+    pub vault: Account<'info, TokenAccount>,
+    pub mint: Account<'info, Mint>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }

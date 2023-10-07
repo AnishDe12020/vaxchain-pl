@@ -5,7 +5,8 @@
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.27.0",
-        "@lumina-dev/test": "^0.0.12"
+        "@lumina-dev/test": "^0.0.12",
+        "@solana/spl-token": "^0.3.8"
     },
     "devDependencies": {
         "@types/bn.js": "^5.1.0",

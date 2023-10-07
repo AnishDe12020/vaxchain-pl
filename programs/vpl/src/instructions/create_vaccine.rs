@@ -27,8 +27,6 @@ pub fn create_vaccine_ix(ctx: Context<CreateVaccine>) -> Result<()> {
     vaccine_pda.batch = *ctx.accounts.batch.key;
     vaccine_pda.used = false;
 
-    batch_pda.quantity = batch_pda.quantity + 1;
-
     Ok(())
 }
 

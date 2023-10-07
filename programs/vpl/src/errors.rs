@@ -8,4 +8,8 @@ pub enum VplError {
     BatchNotManufactured,
     #[msg("Invalid expiration date")]
     InvalidExpirationDate,
+    #[msg("Invalid mint")]
+    InvalidMint,
+    #[msg("Empty batch")]
+    BatchEmpty,
 }

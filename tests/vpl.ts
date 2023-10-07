@@ -3,8 +3,20 @@ import { Program } from "@coral-xyz/anchor";
 import { Vpl } from "../target/types/vpl";
 import lumina from "@lumina-dev/test";
 import { assert } from "chai";
+import {
+  Account,
+  createAssociatedTokenAccountInstruction,
+  getAccount,
+  getAssociatedTokenAddressSync,
+  getOrCreateAssociatedTokenAccount,
+  mintTo,
+} from "@solana/spl-token";
 
 lumina();
+
+const tokenMint = new anchor.web3.PublicKey(
+  "2JU4847ngmiGjuZ6m2pt3unq41GVt6WRw6wnJhVPe2oD"
+);
 
 describe("vaxchain-pl", () => {
   // Configure the client to use the local cluster.
@@ -12,6 +24,7 @@ describe("vaxchain-pl", () => {
 
   const program = anchor.workspace.Vpl as Program<Vpl>;
   const connection = anchor.getProvider().connection;
+  const userWallet = anchor.workspace.Vpl.provider.wallet;
 
   const manufacturer = anchor.web3.Keypair.generate();
   const distributor = anchor.web3.Keypair.generate();
@@ -23,18 +36,44 @@ describe("vaxchain-pl", () => {
   const vaccine3Pubkey = anchor.web3.Keypair.generate().publicKey;
 
   before(async () => {
-    await connection.requestAirdrop(
+    const sig1 = await connection.requestAirdrop(
       manufacturer.publicKey,
       1 * anchor.web3.LAMPORTS_PER_SOL
     );
-    await connection.requestAirdrop(
+    await connection.confirmTransaction(sig1, "confirmed");
+    const sig2 = await connection.requestAirdrop(
       distributor.publicKey,
       1 * anchor.web3.LAMPORTS_PER_SOL
     );
-    await connection.requestAirdrop(
+    await connection.confirmTransaction(sig2, "confirmed");
+    const sig3 = await connection.requestAirdrop(
       doctor.publicKey,
       1 * anchor.web3.LAMPORTS_PER_SOL
     );
+    await connection.confirmTransaction(sig3, "confirmed");
+
+    const distributorAta = await getOrCreateAssociatedTokenAccount(
+      connection,
+      distributor,
+      tokenMint,
+      distributor.publicKey
+    );
+
+    await mintTo(
+      connection,
+      userWallet.payer,
+      tokenMint,
+      distributorAta.address,
+      userWallet.payer,
+      1000 * 10 ** 9
+    );
+
+    const distributorAtaAccount = await getAccount(
+      connection,
+      distributorAta.address
+    );
+
+    console.log(distributorAtaAccount.amount.toString());
   });
 
   it("Creates manufacturer", async () => {
@@ -123,15 +162,22 @@ describe("vaxchain-pl", () => {
       program.programId
     )[0];
 
+    const vaultPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vault"), batchPubkey.toBuffer(), tokenMint.toBuffer()],
+      program.programId
+    )[0];
+
     const far_away_expiry_ms = 1000 * 60 * 60 * 24 * 365 * 10; // 10 years
 
     await program.methods
-      .createBatch(new anchor.BN(far_away_expiry_ms), 250, 350, 350)
+      .createBatch(new anchor.BN(far_away_expiry_ms), 250, 350, 350, 3)
       .accounts({
         batch: batchPubkey,
         user: manufacturer.publicKey,
         batchPda,
         userPda,
+        vault: vaultPda,
+        mint: tokenMint,
       })
       .signers([manufacturer])
       .rpc();
@@ -143,7 +189,7 @@ describe("vaxchain-pl", () => {
     assert.equal(batchPdaAccount.costPerPiece, 350);
     assert.equal(batchPdaAccount.tempMin, 250);
     assert.equal(batchPdaAccount.tempMax, 350);
-    assert.equal(batchPdaAccount.quantity, 0);
+    assert.equal(batchPdaAccount.quantity, 3);
     assert.equal(
       batchPdaAccount.manufacturer.toBase58(),
       manufacturer.publicKey.toBase58()
@@ -242,5 +288,71 @@ describe("vaxchain-pl", () => {
     assert.equal(vaccine1PdaAccount.used, false);
     assert.equal(vaccine2PdaAccount.used, false);
     assert.equal(vaccine3PdaAccount.used, false);
+  });
+
+  it("distributor can receive consignment", async () => {
+    const userPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("user"), distributor.publicKey.toBuffer()],
+      program.programId
+    )[0];
+
+    const batchPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("batch"), batchPubkey.toBuffer()],
+      program.programId
+    )[0];
+
+    const vaultPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vault"), batchPubkey.toBuffer(), tokenMint.toBuffer()],
+      program.programId
+    )[0];
+
+    const distributorAta = await getOrCreateAssociatedTokenAccount(
+      connection,
+      distributor,
+      tokenMint,
+      distributor.publicKey
+    );
+
+    const manufacturerAta = await getOrCreateAssociatedTokenAccount(
+      connection,
+      distributor,
+      tokenMint,
+      manufacturer.publicKey
+    );
+
+    console.log("vault", vaultPda.toBase58());
+
+    await program.methods
+      .distributorReceive()
+      .accounts({
+        batch: batchPubkey,
+        batchPda,
+        distributorTokenAccount: distributorAta.address,
+        manufacturerTokenAccount: manufacturerAta.address,
+        mint: tokenMint,
+        user: distributor.publicKey,
+        userPda,
+        vault: vaultPda,
+      })
+      .signers([distributor])
+      .rpc();
+
+    // const distributorAtaAccount = await getAccount(
+    //   connection,
+    //   distributorAta.address
+    // );
+
+    // console.log(distributorAtaAccount.amount.toString());
+
+    // const manufacturerAtaAccount = await getAccount(
+    //   connection,
+    //   manufacturerAta.address
+    // );
+
+    // console.log(manufacturerAtaAccount.amount.toString());
+
+    // const batchPdaAccount = await program.account.batch.fetch(batchPda);
+
+    // assert.ok(batchPdaAccount.status.storedByDistributor);
   });
 });
