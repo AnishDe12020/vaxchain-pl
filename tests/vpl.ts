@@ -491,4 +491,82 @@ describe("vaxchain-pl", () => {
     assert.equal(tempLogPdaAccount.id, "hello");
     assert.equal(tempLogPdaAccount.batch.toBase58(), batchPubkey.toBase58());
   });
+
+  it("can use a vaccine", async () => {
+    const userPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("user"), doctor.publicKey.toBuffer()],
+      program.programId
+    )[0];
+
+    const vaccine1Pda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vaccine"), vaccine1Pubkey.toBuffer()],
+      program.programId
+    )[0];
+
+    const vaccine2Pda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vaccine"), vaccine2Pubkey.toBuffer()],
+      program.programId
+    )[0];
+
+    const vaccine3Pda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vaccine"), vaccine3Pubkey.toBuffer()],
+      program.programId
+    )[0];
+
+    await program.methods
+      .useVaccine()
+      .accounts({
+        user: doctor.publicKey,
+        userPda,
+        vaccine: vaccine1Pubkey,
+        vaccinePda: vaccine1Pda,
+      })
+      .signers([doctor])
+      .rpc();
+
+    await program.methods
+      .useVaccine()
+      .accounts({
+        user: doctor.publicKey,
+        userPda,
+        vaccine: vaccine2Pubkey,
+        vaccinePda: vaccine2Pda,
+      })
+      .signers([doctor])
+      .rpc();
+
+    await program.methods
+      .useVaccine()
+      .accounts({
+        user: doctor.publicKey,
+        userPda,
+        vaccine: vaccine3Pubkey,
+        vaccinePda: vaccine3Pda,
+      })
+      .signers([doctor])
+      .rpc();
+
+    const vaccine1PdaAccount = await program.account.vaccine.fetch(vaccine1Pda);
+    const vaccine2PdaAccount = await program.account.vaccine.fetch(vaccine2Pda);
+    const vaccine3PdaAccount = await program.account.vaccine.fetch(vaccine3Pda);
+
+    assert.equal(vaccine1PdaAccount.used, true);
+    assert.equal(vaccine2PdaAccount.used, true);
+    assert.equal(vaccine3PdaAccount.used, true);
+    assert.ok(vaccine1PdaAccount.usedAt);
+    assert.ok(vaccine2PdaAccount.usedAt);
+    assert.ok(vaccine3PdaAccount.usedAt);
+    assert.equal(
+      vaccine1PdaAccount.usedBy.toBase58(),
+      doctor.publicKey.toBase58()
+    );
+    assert.equal(
+      vaccine2PdaAccount.usedBy.toBase58(),
+      doctor.publicKey.toBase58()
+    );
+    assert.equal(
+      vaccine3PdaAccount.usedBy.toBase58(),
+      doctor.publicKey.toBase58()
+    );
+  });
 });

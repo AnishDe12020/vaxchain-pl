@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     errors::VplError,
     state::{
-        batch::{self, Batch},
+        batch::Batch,
         logs::TempLog,
         user::{Role, User},
     },

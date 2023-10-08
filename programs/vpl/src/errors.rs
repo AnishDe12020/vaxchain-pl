@@ -12,4 +12,6 @@ pub enum VplError {
     InvalidMint,
     #[msg("Empty batch")]
     BatchEmpty,
+    #[msg("Vaccine is already used")]
+    VaccineAlreadyUsed,
 }
