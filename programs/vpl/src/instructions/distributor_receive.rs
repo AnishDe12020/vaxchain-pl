@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
 use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 
 use crate::{
-    constants,
+    constants::{self, VAX_TOKEN_MINT},
     state::{
         batch::{Batch, BatchStatus},
         user::{Role, User},
@@ -20,6 +22,11 @@ pub fn distributor_receive_ix(ctx: Context<DistributorReceive>) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
     let distributor = &mut ctx.accounts.user;
     let mint = &ctx.accounts.mint;
+
+    require!(
+        mint.key() == Pubkey::from_str(VAX_TOKEN_MINT).unwrap(),
+        VplError::InvalidMint
+    );
 
     let clock = Clock::get()?;
 

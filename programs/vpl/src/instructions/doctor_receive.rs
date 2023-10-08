@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 
@@ -23,6 +25,8 @@ pub fn doctor_receive_ix(ctx: Context<DoctorReceive>) -> Result<()> {
     let mint = &ctx.accounts.mint;
     let batch = &ctx.accounts.batch;
 
+    require!(mint.key() == Pubkey::from_str(VAX_TOKEN_MINT).unwrap(), VplError::InvalidMint);
+
     require!(
         matches!(user_pda.role, Role::Doctor),
         VplError::UnauhtorizedRole
@@ -35,9 +39,7 @@ pub fn doctor_receive_ix(ctx: Context<DoctorReceive>) -> Result<()> {
 
     let days = calculate_days(batch_pda.start_date, clock.unix_timestamp);
 
-    msg!("days: {}", days);
 
-    msg!("ref: {}", ((batch_pda.quantity * batch_pda.cost_per_piece) as u16 + (calculate_refrigeration_cost(days as u16, batch_pda.temp_max)) * batch_pda.quantity) as u64 * 10_u64.pow(mint.decimals.into()));
 
     transfer_checked(
         CpiContext::new(

@@ -14,4 +14,8 @@ pub enum VplError {
     BatchEmpty,
     #[msg("Vaccine is already used")]
     VaccineAlreadyUsed,
+    #[msg("Invalid temp log")]
+    InvalidTempLog,
+    #[msg("Temp log not passed in")]
+    TempLogNotPassedIn,
 }

@@ -1,15 +1,13 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::ID_LENGTH;
-
 #[account]
 pub struct TempLog {
     pub batch: Pubkey,
     pub timestamp: i64,
     pub temp: u16,
-    pub id: String,
+    pub pubkey: Pubkey,
 }
 
 impl TempLog {
-    pub const LEN: usize = 32 + 8 + 2 + ID_LENGTH;
+    pub const LEN: usize = 8 + 32 + 8 + 2 + 32;
 }

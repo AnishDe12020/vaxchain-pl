@@ -32,6 +32,9 @@ describe("vaxchain-pl", () => {
   const vaccine2Pubkey = anchor.web3.Keypair.generate().publicKey;
   const vaccine3Pubkey = anchor.web3.Keypair.generate().publicKey;
 
+  const tempLog1Pubkey = anchor.web3.Keypair.generate().publicKey;
+  const tempLog2Pubkey = anchor.web3.Keypair.generate().publicKey;
+
   before(async () => {
     const sig1 = await connection.requestAirdrop(
       manufacturer.publicKey,
@@ -469,18 +472,32 @@ describe("vaxchain-pl", () => {
     )[0];
 
     const tempLogPda = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("temp_log"), batchPubkey.toBuffer()],
+      [
+        Buffer.from("temp_log"),
+        batchPubkey.toBuffer(),
+        tempLog1Pubkey.toBuffer(),
+      ],
+      program.programId
+    )[0];
+
+    const vaultPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vault"), batchPubkey.toBuffer(), tokenMint.toBuffer()],
       program.programId
     )[0];
 
     await program.methods
-      .tempLog(300, "hello")
+      .tempLog(300)
       .accounts({
         batch: batchPubkey,
         batchPda,
-        tempLog: tempLogPda,
+        tempLog: tempLog1Pubkey,
+        tempLogPda,
         user: distributor.publicKey,
         userPda,
+        lastTempLog: null,
+        lastTempLogPda: null,
+        mint: tokenMint,
+        vault: vaultPda,
       })
       .signers([distributor])
       .rpc();
@@ -488,8 +505,66 @@ describe("vaxchain-pl", () => {
     const tempLogPdaAccount = await program.account.tempLog.fetch(tempLogPda);
 
     assert.equal(tempLogPdaAccount.temp, 300);
-    assert.equal(tempLogPdaAccount.id, "hello");
     assert.equal(tempLogPdaAccount.batch.toBase58(), batchPubkey.toBase58());
+  });
+
+  it("slashes stake when temperature data is invalid", async () => {
+    const userPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("user"), distributor.publicKey.toBuffer()],
+      program.programId
+    )[0];
+
+    const batchPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("batch"), batchPubkey.toBuffer()],
+      program.programId
+    )[0];
+
+    const tempLogPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("temp_log"),
+        batchPubkey.toBuffer(),
+        tempLog2Pubkey.toBuffer(),
+      ],
+      program.programId
+    )[0];
+
+    const lastTempLogPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("temp_log"),
+        batchPubkey.toBuffer(),
+        tempLog1Pubkey.toBuffer(),
+      ],
+      program.programId
+    )[0];
+
+    const vaultPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vault"), batchPubkey.toBuffer(), tokenMint.toBuffer()],
+      program.programId
+    )[0];
+
+    await program.methods
+      .tempLog(370)
+      .accounts({
+        batch: batchPubkey,
+        batchPda,
+        tempLog: tempLog2Pubkey,
+        tempLogPda,
+        user: distributor.publicKey,
+        userPda,
+        lastTempLog: tempLog1Pubkey,
+        lastTempLogPda: lastTempLogPda,
+        mint: tokenMint,
+        vault: vaultPda,
+      })
+      .signers([distributor])
+      .rpc();
+
+    const tempLogPdaAccount = await program.account.tempLog.fetch(tempLogPda);
+    const batchPdaAccount = await program.account.batch.fetch(batchPda);
+
+    assert.equal(tempLogPdaAccount.temp, 370);
+    assert.equal(tempLogPdaAccount.batch.toBase58(), batchPubkey.toBase58());
+    assert.equal(batchPdaAccount.tempDefect, true);
   });
 
   it("can use a vaccine", async () => {

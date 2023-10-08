@@ -22,8 +22,10 @@ pub struct Batch {
     pub temp_defect: bool,
     pub start_date: i64,
     pub stop_date: i64,
+    pub latest_temp_log: Option<Pubkey>,
 }
 
 impl Batch {
-    pub const LEN: usize = 8 + 32 + 32 + (1 + 32) + 8 + 8 + 2 + 2 + 2 + 2 + 1 + 1 + 8 + 8;
+    pub const LEN: usize =
+        8 + 32 + 32 + (1 + 32) + 8 + 8 + 2 + 2 + 2 + 2 + 1 + 1 + 8 + 8 + (1 + 32);
 }

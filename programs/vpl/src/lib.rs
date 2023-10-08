@@ -57,8 +57,8 @@ pub mod vpl {
         doctor_receive_ix(ctx)
     }
 
-    pub fn temp_log(ctx: Context<TempLogAccounts>, temp: u16, id: String) -> Result<()> {
-        temp_log_ix(ctx, temp, id)
+    pub fn temp_log(ctx: Context<TempLogAccounts>, temp: u16) -> Result<()> {
+        temp_log_ix(ctx, temp)
     }
 
     pub fn use_vaccine(ctx: Context<UseVaccine>) -> Result<()> {
