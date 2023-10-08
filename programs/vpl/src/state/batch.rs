@@ -20,8 +20,10 @@ pub struct Batch {
     pub cost_per_piece: u16,
     pub status: BatchStatus,
     pub temp_defect: bool,
+    pub start_date: i64,
+    pub stop_date: i64,
 }
 
 impl Batch {
-    pub const LEN: usize = 8 + 32 + 32 + (1 + 32) + 8 + 8 + 2 + 2 + 2 + 2 + 1 + 1;
+    pub const LEN: usize = 8 + 32 + 32 + (1 + 32) + 8 + 8 + 2 + 2 + 2 + 2 + 1 + 1 + 8 + 8;
 }

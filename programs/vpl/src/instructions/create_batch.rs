@@ -32,6 +32,8 @@ pub fn create_batch_ix(ctx: Context<CreateBatch>, expires_at: i64, temp_min: u16
     batch_pda.cost_per_piece = cost_per_piece;
     batch_pda.status = BatchStatus::Manufactured;
     batch_pda.quantity = quantity;
+    batch_pda.start_date = 0;
+    batch_pda.stop_date = 0;
 
     Ok(())
 }
@@ -61,7 +63,7 @@ pub struct CreateBatch<'info> {
         seeds = [b"vault".as_ref(), batch.key().as_ref(), mint.key().as_ref()],
         bump,
         token::mint = mint,
-        token::authority = vault
+        token::authority = batch_pda
     )]
     pub vault: Account<'info, TokenAccount>,
     pub mint: Account<'info, Mint>,

@@ -21,6 +21,8 @@ pub fn distributor_receive_ix(ctx: Context<DistributorReceive>) -> Result<()> {
     let distributor = &mut ctx.accounts.user;
     let mint = &ctx.accounts.mint;
 
+    let clock = Clock::get()?;
+
     require!(
         matches!(user_pda.role, Role::Distributor),
         VplError::UnauhtorizedRole
@@ -38,7 +40,7 @@ pub fn distributor_receive_ix(ctx: Context<DistributorReceive>) -> Result<()> {
                 authority: distributor.to_account_info(),
             },
         ),
-        (batch_pda.quantity * batch_pda.cost_per_piece).into(),
+        (batch_pda.quantity * batch_pda.cost_per_piece) as u64 * 10_u64.pow(mint.decimals.into()),
         mint.decimals,
     )?;
 
@@ -52,11 +54,12 @@ pub fn distributor_receive_ix(ctx: Context<DistributorReceive>) -> Result<()> {
                 authority: distributor.to_account_info(),
             },
         ),
-        (batch_pda.quantity * constants::STAKE_PER_PIECE).into(),
+        (batch_pda.quantity * constants::STAKE_PER_PIECE) as u64 * 10_u64.pow(mint.decimals.into()),
         mint.decimals,
     )?;
 
     batch_pda.status = BatchStatus::StoredByDistributor;
+    batch_pda.start_date = clock.unix_timestamp;
 
     Ok(())
 }
@@ -73,6 +76,7 @@ pub struct DistributorReceive<'info> {
     /// CHECK: identifier
     pub batch: AccountInfo<'info>,
     #[account(
+        mut,
         seeds = [b"batch".as_ref(), batch.key().as_ref()],
         bump,
     )]
@@ -82,10 +86,11 @@ pub struct DistributorReceive<'info> {
     #[account(mut)]
     pub manufacturer_token_account: Account<'info, TokenAccount>,
     #[account(
+        mut,
         seeds = [b"vault".as_ref(), batch.key().as_ref(), mint.key().as_ref()],
         bump,
         token::mint = mint,
-        token::authority = vault
+        token::authority = batch_pda
     )]
     pub vault: Account<'info, TokenAccount>,
     pub mint: Account<'info, Mint>,

@@ -14,6 +14,14 @@ import {
 
 lumina();
 
+function timeout(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function sleep(fn, ...args) {
+  await timeout(3000);
+  return fn(...args);
+}
+
 const tokenMint = new anchor.web3.PublicKey(
   "2JU4847ngmiGjuZ6m2pt3unq41GVt6WRw6wnJhVPe2oD"
 );
@@ -67,13 +75,6 @@ describe("vaxchain-pl", () => {
       userWallet.payer,
       1000 * 10 ** 9
     );
-
-    const distributorAtaAccount = await getAccount(
-      connection,
-      distributorAta.address
-    );
-
-    console.log(distributorAtaAccount.amount.toString());
   });
 
   it("Creates manufacturer", async () => {
@@ -170,7 +171,7 @@ describe("vaxchain-pl", () => {
     const far_away_expiry_ms = 1000 * 60 * 60 * 24 * 365 * 10; // 10 years
 
     await program.methods
-      .createBatch(new anchor.BN(far_away_expiry_ms), 250, 350, 350, 3)
+      .createBatch(new anchor.BN(far_away_expiry_ms), 250, 350, 200, 3)
       .accounts({
         batch: batchPubkey,
         user: manufacturer.publicKey,
@@ -186,7 +187,7 @@ describe("vaxchain-pl", () => {
 
     assert.equal(batchPdaAccount.pubkey.toBase58(), batchPubkey.toBase58());
     assert.equal(batchPdaAccount.expiresAt.toNumber(), far_away_expiry_ms);
-    assert.equal(batchPdaAccount.costPerPiece, 350);
+    assert.equal(batchPdaAccount.costPerPiece, 200);
     assert.equal(batchPdaAccount.tempMin, 250);
     assert.equal(batchPdaAccount.tempMax, 350);
     assert.equal(batchPdaAccount.quantity, 3);
@@ -320,9 +321,7 @@ describe("vaxchain-pl", () => {
       manufacturer.publicKey
     );
 
-    console.log("vault", vaultPda.toBase58());
-
-    await program.methods
+    const sig = await program.methods
       .distributorReceive()
       .accounts({
         batch: batchPubkey,
@@ -337,22 +336,38 @@ describe("vaxchain-pl", () => {
       .signers([distributor])
       .rpc();
 
-    // const distributorAtaAccount = await getAccount(
-    //   connection,
-    //   distributorAta.address
-    // );
+    await connection.confirmTransaction(sig, "confirmed");
 
-    // console.log(distributorAtaAccount.amount.toString());
+    const distributorAtaAccount = await getAccount(
+      connection,
+      distributorAta.address
+    );
 
-    // const manufacturerAtaAccount = await getAccount(
-    //   connection,
-    //   manufacturerAta.address
-    // );
+    assert.equal(
+      distributorAtaAccount.amount.toString(),
+      (1000 * 10 ** 9 - (200 * 3 + 100 * 3) * 10 ** 9).toString()
+    );
 
-    // console.log(manufacturerAtaAccount.amount.toString());
+    const manufacturerAtaAccount = await getAccount(
+      connection,
+      manufacturerAta.address
+    );
 
-    // const batchPdaAccount = await program.account.batch.fetch(batchPda);
+    assert.equal(
+      manufacturerAtaAccount.amount.toString(),
+      (200 * 3 * 10 ** 9).toString()
+    );
 
-    // assert.ok(batchPdaAccount.status.storedByDistributor);
+    const vaultAtaAccount = await getAccount(connection, vaultPda);
+
+    assert.equal(
+      vaultAtaAccount.amount.toString(),
+      (100 * 3 * 10 ** 9).toString()
+    );
+
+    const batchPdaAccount = await program.account.batch.fetch(batchPda);
+
+    assert.ok(batchPdaAccount.status.storedByDistributor);
+    assert.ok(batchPdaAccount.startDate.toNumber() > 0);
   });
 });
