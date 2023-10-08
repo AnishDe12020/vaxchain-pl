@@ -14,14 +14,6 @@ import {
 
 lumina();
 
-function timeout(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-async function sleep(fn, ...args) {
-  await timeout(3000);
-  return fn(...args);
-}
-
 const tokenMint = new anchor.web3.PublicKey(
   "2JU4847ngmiGjuZ6m2pt3unq41GVt6WRw6wnJhVPe2oD"
 );
@@ -67,11 +59,27 @@ describe("vaxchain-pl", () => {
       distributor.publicKey
     );
 
+    const doctorAta = await getOrCreateAssociatedTokenAccount(
+      connection,
+      doctor,
+      tokenMint,
+      doctor.publicKey
+    );
+
     await mintTo(
       connection,
       userWallet.payer,
       tokenMint,
       distributorAta.address,
+      userWallet.payer,
+      1000 * 10 ** 9
+    );
+
+    await mintTo(
+      connection,
+      userWallet.payer,
+      tokenMint,
+      doctorAta.address,
       userWallet.payer,
       1000 * 10 ** 9
     );
@@ -369,5 +377,79 @@ describe("vaxchain-pl", () => {
 
     assert.ok(batchPdaAccount.status.storedByDistributor);
     assert.ok(batchPdaAccount.startDate.toNumber() > 0);
+  });
+
+  it("doctor can receive", async () => {
+    const userPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("user"), doctor.publicKey.toBuffer()],
+      program.programId
+    )[0];
+
+    const batchPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("batch"), batchPubkey.toBuffer()],
+      program.programId
+    )[0];
+
+    const vaultPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("vault"), batchPubkey.toBuffer(), tokenMint.toBuffer()],
+      program.programId
+    )[0];
+
+    const distributorAta = await getOrCreateAssociatedTokenAccount(
+      connection,
+      distributor,
+      tokenMint,
+      distributor.publicKey
+    );
+
+    const doctorAta = await getOrCreateAssociatedTokenAccount(
+      connection,
+      distributor,
+      tokenMint,
+      doctor.publicKey
+    );
+
+    const sig = await program.methods
+      .doctorReceive()
+      .accounts({
+        batch: batchPubkey,
+        batchPda,
+        distributorTokenAccount: distributorAta.address,
+        doctorTokenAccount: doctorAta.address,
+        mint: tokenMint,
+        user: doctor.publicKey,
+        userPda,
+        vault: vaultPda,
+      })
+      .signers([doctor])
+      .rpc();
+
+    await connection.confirmTransaction(sig, "confirmed");
+
+    const distributorAtaAccount = await getAccount(
+      connection,
+      distributorAta.address
+    );
+
+    const doctorAtaAccount = await getAccount(connection, doctorAta.address);
+
+    const vaultAtaAccount = await getAccount(connection, vaultPda);
+
+    const batchPdaAccount = await program.account.batch.fetch(batchPda);
+
+    assert.ok(batchPdaAccount.status.receivedByDoctor);
+    assert.ok(batchPdaAccount.stopDate.toNumber() > 0);
+
+    assert.equal(
+      distributorAtaAccount.amount.toString(),
+      ((1000 + 3 * 10) * 10 ** 9).toString()
+    );
+
+    assert.equal(
+      doctorAtaAccount.amount.toString(),
+      (1000 * 10 ** 9 - (200 + 10) * 3 * 10 ** 9).toString()
+    );
+
+    assert.equal(vaultAtaAccount.amount.toString(), "0");
   });
 });

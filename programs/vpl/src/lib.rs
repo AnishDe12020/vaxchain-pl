@@ -6,6 +6,7 @@ pub mod constants;
 pub mod errors;
 pub mod instructions;
 pub mod state;
+pub mod utils;
 
 use crate::state::user::Role;
 
@@ -13,6 +14,7 @@ use instructions::create_batch::*;
 use instructions::create_user::*;
 use instructions::create_vaccine::*;
 use instructions::distributor_receive::*;
+use instructions::doctor_receive::*;
 
 #[program]
 pub mod vpl {
@@ -47,5 +49,9 @@ pub mod vpl {
 
     pub fn distributor_receive(ctx: Context<DistributorReceive>) -> Result<()> {
         distributor_receive_ix(ctx)
+    }
+
+    pub fn doctor_receive(ctx: Context<DoctorReceive>) -> Result<()> {
+        doctor_receive_ix(ctx)
     }
 }
