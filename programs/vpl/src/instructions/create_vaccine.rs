@@ -26,6 +26,8 @@ pub fn create_vaccine_ix(ctx: Context<CreateVaccine>) -> Result<()> {
     vaccine_pda.pubkey = *ctx.accounts.vaccine.key;
     vaccine_pda.batch = *ctx.accounts.batch.key;
     vaccine_pda.used = false;
+    vaccine_pda.used_at = None;
+    vaccine_pda.used_by = None;
 
     Ok(())
 }

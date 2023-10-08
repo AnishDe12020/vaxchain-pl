@@ -4,10 +4,7 @@ import { Vpl } from "../target/types/vpl";
 import lumina from "@lumina-dev/test";
 import { assert } from "chai";
 import {
-  Account,
-  createAssociatedTokenAccountInstruction,
   getAccount,
-  getAssociatedTokenAddressSync,
   getOrCreateAssociatedTokenAccount,
   mintTo,
 } from "@solana/spl-token";
@@ -204,6 +201,7 @@ describe("vaxchain-pl", () => {
       manufacturer.publicKey.toBase58()
     );
     assert.ok(batchPdaAccount.status.manufactured);
+    assert.ok(!batchPdaAccount.distributor);
   });
 
   it("can create vaccines", async () => {
@@ -297,6 +295,12 @@ describe("vaxchain-pl", () => {
     assert.equal(vaccine1PdaAccount.used, false);
     assert.equal(vaccine2PdaAccount.used, false);
     assert.equal(vaccine3PdaAccount.used, false);
+    assert.ok(!vaccine1PdaAccount.usedAt);
+    assert.ok(!vaccine2PdaAccount.usedAt);
+    assert.ok(!vaccine3PdaAccount.usedAt);
+    assert.ok(!vaccine1PdaAccount.usedBy);
+    assert.ok(!vaccine2PdaAccount.usedBy);
+    assert.ok(!vaccine3PdaAccount.usedBy);
   });
 
   it("distributor can receive consignment", async () => {
@@ -451,5 +455,40 @@ describe("vaxchain-pl", () => {
     );
 
     assert.equal(vaultAtaAccount.amount.toString(), "0");
+  });
+
+  it("can create a temp log", async () => {
+    const userPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("user"), distributor.publicKey.toBuffer()],
+      program.programId
+    )[0];
+
+    const batchPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("batch"), batchPubkey.toBuffer()],
+      program.programId
+    )[0];
+
+    const tempLogPda = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("temp_log"), batchPubkey.toBuffer()],
+      program.programId
+    )[0];
+
+    await program.methods
+      .tempLog(300, "hello")
+      .accounts({
+        batch: batchPubkey,
+        batchPda,
+        tempLog: tempLogPda,
+        user: distributor.publicKey,
+        userPda,
+      })
+      .signers([distributor])
+      .rpc();
+
+    const tempLogPdaAccount = await program.account.tempLog.fetch(tempLogPda);
+
+    assert.equal(tempLogPdaAccount.temp, 300);
+    assert.equal(tempLogPdaAccount.id, "hello");
+    assert.equal(tempLogPdaAccount.batch.toBase58(), batchPubkey.toBase58());
   });
 });

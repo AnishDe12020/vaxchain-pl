@@ -15,6 +15,7 @@ use instructions::create_user::*;
 use instructions::create_vaccine::*;
 use instructions::distributor_receive::*;
 use instructions::doctor_receive::*;
+use instructions::temp_log::*;
 
 #[program]
 pub mod vpl {
@@ -53,5 +54,9 @@ pub mod vpl {
 
     pub fn doctor_receive(ctx: Context<DoctorReceive>) -> Result<()> {
         doctor_receive_ix(ctx)
+    }
+
+    pub fn temp_log(ctx: Context<TempLogAccounts>, temp: u16, id: String) -> Result<()> {
+        temp_log_ix(ctx, temp, id)
     }
 }

@@ -58,6 +58,7 @@ pub fn distributor_receive_ix(ctx: Context<DistributorReceive>) -> Result<()> {
         mint.decimals,
     )?;
 
+    batch_pda.distributor = Some(*ctx.accounts.user.key);
     batch_pda.status = BatchStatus::StoredByDistributor;
     batch_pda.start_date = clock.unix_timestamp;
 

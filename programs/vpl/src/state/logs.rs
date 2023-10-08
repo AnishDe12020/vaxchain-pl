@@ -1,30 +1,15 @@
 use anchor_lang::prelude::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub enum LogType {
-    Manufactured = 0,
-    StoredByDistributor = 1,
-    ReceivedByDoctor = 2,
-}
-
-#[account]
-pub struct Log {
-    batch: Pubkey,
-    timestamp: i64,
-    log_type: LogType,
-}
-
-impl Log {
-    pub const LEN: usize = 32 + 8 + 1;
-}
+use crate::constants::ID_LENGTH;
 
 #[account]
 pub struct TempLog {
-    batch: Pubkey,
-    timestamp: i64,
-    temp: u8,
+    pub batch: Pubkey,
+    pub timestamp: i64,
+    pub temp: u16,
+    pub id: String,
 }
 
 impl TempLog {
-    pub const LEN: usize = 32 + 8 + 1;
+    pub const LEN: usize = 32 + 8 + 2 + ID_LENGTH;
 }
