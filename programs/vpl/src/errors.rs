@@ -18,4 +18,8 @@ pub enum VplError {
     InvalidTempLog,
     #[msg("Temp log not passed in")]
     TempLogNotPassedIn,
+    #[msg("Temp not expired")]
+    TempNotExpired,
+    #[msg("No temp log")]
+    NoTempLog,
 }

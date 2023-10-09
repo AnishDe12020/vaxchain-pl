@@ -26,6 +26,21 @@ pub fn temp_log_ix(ctx: Context<TempLogAccounts>, temp: u16) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
     let token_program = &mut ctx.accounts.token_program;
 
+    require!(
+        mint.key() == Pubkey::from_str(VAX_TOKEN_MINT).unwrap(),
+        VplError::InvalidMint
+    );
+
+    require!(
+        matches!(user_pda.role, Role::Distributor),
+        VplError::UnauhtorizedRole
+    );
+
+    require!(
+        batch_pda.distributor.unwrap() == user.key(),
+        VplError::UnauhtorizedRole
+    );
+
     let clock: Clock = Clock::get()?;
 
     let batch_key = batch.key();
@@ -70,21 +85,6 @@ pub fn temp_log_ix(ctx: Context<TempLogAccounts>, temp: u16) -> Result<()> {
         }
     }
 
-    require!(
-        mint.key() == Pubkey::from_str(VAX_TOKEN_MINT).unwrap(),
-        VplError::InvalidMint
-    );
-
-    require!(
-        matches!(user_pda.role, Role::Distributor),
-        VplError::UnauhtorizedRole
-    );
-
-    require!(
-        batch_pda.distributor.unwrap() == user.key(),
-        VplError::UnauhtorizedRole
-    );
-
     if temp < batch_pda.temp_min || temp > batch_pda.temp_max {
         burn(
             CpiContext::new(
@@ -113,7 +113,6 @@ pub fn temp_log_ix(ctx: Context<TempLogAccounts>, temp: u16) -> Result<()> {
 }
 
 #[derive(Accounts)]
-#[instruction(temp: u16)]
 pub struct TempLogAccounts<'info> {
     #[account(mut)]
     pub user: Signer<'info>,

@@ -10,6 +10,7 @@ pub mod utils;
 
 use crate::state::user::Role;
 
+use instructions::check_temp::*;
 use instructions::create_batch::*;
 use instructions::create_user::*;
 use instructions::create_vaccine::*;
@@ -63,5 +64,9 @@ pub mod vpl {
 
     pub fn use_vaccine(ctx: Context<UseVaccine>) -> Result<()> {
         use_vaccine_ix(ctx)
+    }
+
+    pub fn check_temp(ctx: Context<CheckTemp>) -> Result<()> {
+        check_temp_ix(ctx)
     }
 }

@@ -565,7 +565,46 @@ describe("vaxchain-pl", () => {
     assert.equal(tempLogPdaAccount.temp, 370);
     assert.equal(tempLogPdaAccount.batch.toBase58(), batchPubkey.toBase58());
     assert.equal(batchPdaAccount.tempDefect, true);
+
+    const vaultAtaAccount = await getAccount(connection, vaultPda);
+
+    assert.equal(vaultAtaAccount.amount.toString(), "0");
   });
+
+  // it("can check a temp log", async () => {
+  //   const tempLogPda = anchor.web3.PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from("temp_log"),
+  //       batchPubkey.toBuffer(),
+  //       tempLog1Pubkey.toBuffer(),
+  //     ],
+  //     program.programId
+  //   )[0];
+
+  //   const vaultPda = anchor.web3.PublicKey.findProgramAddressSync(
+  //     [Buffer.from("vault"), batchPubkey.toBuffer(), tokenMint.toBuffer()],
+  //     program.programId
+  //   )[0];
+
+  //   const batchPda = anchor.web3.PublicKey.findProgramAddressSync(
+  //     [Buffer.from("batch"), batchPubkey.toBuffer()],
+  //     program.programId
+  //   )[0];
+
+  //   await program.methods
+  //     .checkTemp()
+  //     .accounts({
+  //       batch: batchPubkey,
+  //       batchPda,
+  //       tempLog: tempLog1Pubkey,
+  //       tempLogPda: tempLogPda,
+  //       mint: tokenMint,
+  //       vault: vaultPda,
+  //       user: doctor.publicKey,
+  //     })
+  //     .signers([doctor])
+  //     .rpc();
+  // });
 
   it("can use a vaccine", async () => {
     const userPda = anchor.web3.PublicKey.findProgramAddressSync(

@@ -1,3 +1,4 @@
+pub mod check_temp;
 pub mod create_batch;
 pub mod create_user;
 pub mod create_vaccine;
