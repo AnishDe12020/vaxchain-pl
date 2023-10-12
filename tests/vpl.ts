@@ -12,7 +12,7 @@ import {
 lumina();
 
 const tokenMint = new anchor.web3.PublicKey(
-  "2JU4847ngmiGjuZ6m2pt3unq41GVt6WRw6wnJhVPe2oD"
+  "VAX5dPMGakTPLpdMunmnJcKsMoKh1532C5Z2XHFEbm5"
 );
 
 describe("vaxchain-pl", () => {
