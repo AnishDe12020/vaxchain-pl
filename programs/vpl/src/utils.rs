@@ -1,10 +1,4 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{burn, Burn, Mint, Token, TokenAccount};
-
-use crate::{
-    constants::COST_PER_REFRIGERATION_UNIT, instructions::temp_log::TempLogAccounts,
-    state::batch::Batch,
-};
+use crate::constants::COST_PER_REFRIGERATION_UNIT;
 
 pub fn calculate_refrigeration_cost(days: u16, temp: u16) -> u16 {
     if temp > 283 {

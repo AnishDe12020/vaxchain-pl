@@ -446,6 +446,10 @@ describe("vaxchain-pl", () => {
 
     assert.ok(batchPdaAccount.status.receivedByDoctor);
     assert.ok(batchPdaAccount.stopDate.toNumber() > 0);
+    assert.equal(
+      batchPdaAccount.doctor.toBase58(),
+      doctor.publicKey.toBase58()
+    );
 
     assert.equal(
       distributorAtaAccount.amount.toString(),

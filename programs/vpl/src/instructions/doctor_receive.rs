@@ -85,6 +85,7 @@ pub fn doctor_receive_ix(ctx: Context<DoctorReceive>) -> Result<()> {
 
     batch_pda.status = BatchStatus::ReceivedByDoctor;
     batch_pda.stop_date = clock.unix_timestamp;
+    batch_pda.doctor = Some(doctor.key());
 
     Ok(())
 }

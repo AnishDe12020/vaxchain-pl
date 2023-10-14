@@ -35,6 +35,7 @@ pub fn create_batch_ix(ctx: Context<CreateBatch>, expires_at: i64, temp_min: u16
     batch_pda.start_date = 0;
     batch_pda.stop_date = 0;
     batch_pda.distributor = None;
+    batch_pda.doctor = None;
 
     Ok(())
 }

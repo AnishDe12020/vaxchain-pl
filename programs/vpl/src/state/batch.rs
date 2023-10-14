@@ -12,6 +12,7 @@ pub struct Batch {
     pub pubkey: Pubkey,
     pub manufacturer: Pubkey,
     pub distributor: Option<Pubkey>,
+    pub doctor: Option<Pubkey>,
     pub manufactured_at: i64,
     pub expires_at: i64,
     pub quantity: u16,
@@ -27,5 +28,5 @@ pub struct Batch {
 
 impl Batch {
     pub const LEN: usize =
-        8 + 32 + 32 + (1 + 32) + 8 + 8 + 2 + 2 + 2 + 2 + 1 + 1 + 8 + 8 + (1 + 32) + (1 + 32);
+        8 + 32 + 32 + (1 + 32) + (1 + 32) + 8 + 8 + 2 + 2 + 2 + 2 + 1 + 1 + 8 + 8 + (1 + 32);
 }
