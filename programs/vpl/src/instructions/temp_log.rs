@@ -62,6 +62,8 @@ pub fn temp_log_ix(ctx: Context<TempLogAccounts>, temp: u16) -> Result<()> {
             let last_temp_data = last_temp_log_pda.clone().unwrap();
 
             if clock.unix_timestamp - last_temp_data.timestamp > 300 {
+                msg!("Burning since temp log is older than 5 minutes");
+
                 burn(
                     CpiContext::new(
                         token_program.to_account_info(),
@@ -86,6 +88,8 @@ pub fn temp_log_ix(ctx: Context<TempLogAccounts>, temp: u16) -> Result<()> {
     }
 
     if temp < batch_pda.temp_min || temp > batch_pda.temp_max {
+        msg!("Burning since temp is out of range");
+
         burn(
             CpiContext::new(
                 token_program.to_account_info(),

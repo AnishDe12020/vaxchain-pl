@@ -40,7 +40,7 @@ pub fn check_temp_ix(ctx: Context<CheckTemp>) -> Result<()> {
         return Err(VplError::InvalidTempLog.into());
     }
 
-    if clock.unix_timestamp - temp_log_pda.timestamp >= 1 {
+    if clock.unix_timestamp - temp_log_pda.timestamp >= 300 {
         burn(
             CpiContext::new(
                 token_program.to_account_info(),
